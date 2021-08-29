@@ -1,7 +1,11 @@
+using dotnet_webapi_test.Data;
+using dotnet_webapi_test.Data.Models;
+using dotnet_webapi_test.Data.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,9 +20,12 @@ namespace dotnet_webapi_test
 {
     public class Startup
     {
+        public string ConnectionString { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            //config is in appsettings.json
+            ConnectionString = Configuration.GetConnectionString("DefaultConnectionString");
         }
 
         public IConfiguration Configuration { get; }
@@ -28,6 +35,12 @@ namespace dotnet_webapi_test
         {
 
             services.AddControllers();
+            //configure db context with sql database
+            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(ConnectionString));
+
+            //configure the services
+            services.AddTransient<BooksService>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "dotnet_webapi_test", Version = "v1" });
@@ -54,6 +67,9 @@ namespace dotnet_webapi_test
             {
                 endpoints.MapControllers();
             });
+
+            //code·Î table dummy data generate
+            AppDbInitializer.Seed(app);
         }
     }
 }
